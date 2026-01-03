@@ -1,14 +1,20 @@
 import axios from "axios";
 import { load } from "cheerio";
+import { normalizeUrl } from "../utils/normalize.js";
 
-export const getSitemapUrls = async () => {
-  const response = await axios.get("https://www.edzy.ai/sitemap.xml");
-  const $ = load(response.data, { xmlMode: true });
+export async function getSitemapUrls() {
+  const { data } = await axios.get("https://www.edzy.ai/sitemap.xml", {
+    timeout: 10000,
+  });
+
+  const $ = load(data, { xmlMode: true });
   const urls = [];
 
-  $("url > loc").each((_, e) => {
-    const pageUrl = $(e).text().trim();
-    urls.push(pageUrl);
+  $("url > loc").each((_, el) => {
+    const raw = $(el).text().trim();
+    const clean = normalizeUrl(raw);
+    if (clean) urls.push(clean);
   });
+
   return urls;
-};
+}
