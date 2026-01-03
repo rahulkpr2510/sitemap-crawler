@@ -1,23 +1,27 @@
-export const buildIncomingLinks = async () => {
+import { Page } from "../models/page.models.js";
+
+export async function buildIncomingLinks() {
+  // Reset old graph to avoid ghost edges
+  await Page.updateMany({}, { $set: { incomingLinks: [], incomingCount: 0 } });
+
   const pages = await Page.find({}, { url: 1, outgoingLinks: 1 });
 
-  const incomingMap = {};
+  const graph = {};
 
-  pages.forEach((page) => {
-    page.outgoingLinks.forEach((linkObj) => {
-      const target = linkObj.url?.trim();
-      if (!target) return;
+  for (const page of pages) {
+    for (const link of page.outgoingLinks) {
+      if (!graph[link.url]) graph[link.url] = [];
+      graph[link.url].push(page.url);
+    }
+  }
 
-      if (!incomingMap[target]) incomingMap[target] = [];
-      incomingMap[target].push(page.url);
-    });
-  });
+  for (const [url, sources] of Object.entries(graph)) {
+    const unique = [...new Set(sources)];
 
-  for (const url in incomingMap) {
     await Page.updateOne(
       { url },
-      { $addToSet: { incomingLinks: { $each: incomingMap[url] } } },
+      { incomingLinks: unique, incomingCount: unique.length },
       { upsert: true }
     );
   }
-};
+}
