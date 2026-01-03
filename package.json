@@ -1,0 +1,28 @@
+{
+  "name": "sitemap-crawler",
+  "version": "1.0.0",
+  "description": "a sitemap crawler that is used to identify the incoming and outgoing links in each web page",
+  "keywords": [
+    "edzy",
+    "backend",
+    "site",
+    "crawler"
+  ],
+  "license": "ISC",
+  "author": "Rahul Kapoor",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "cheerio": "^1.1.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mongoose": "^9.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
