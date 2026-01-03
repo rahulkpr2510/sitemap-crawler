@@ -1,4 +1,4 @@
-import axios from "axios";
+import { chromium } from "playwright";
 import { load } from "cheerio";
 import { Page } from "../models/page.models.js";
 import { normalizeUrl } from "../utils/normalize.js";
@@ -9,16 +9,12 @@ export async function crawlPage(url) {
   const clean = normalizeUrl(url);
   if (!clean) return;
 
-  const { data } = await axios.get(clean, {
-    timeout: 15000,
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; EdzyCrawler/1.0; +https://www.edzy.ai)",
-      Accept: "text/html",
-    },
-  });
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  await page.goto(clean, { waitUntil: "networkidle" });
 
-  const $ = load(data);
+  const html = await page.content();
+  const $ = load(html);
 
   const outgoingLinks = [];
 
@@ -38,15 +34,13 @@ export async function crawlPage(url) {
     });
   });
 
-  if (outgoingLinks.length === 0) {
-    console.warn("⚠️ No links extracted from", clean);
-  }
+  await browser.close();
 
   await Page.findOneAndUpdate(
     { url: clean },
     {
       url: clean,
-      html: data,
+      html,
       outgoingLinks,
       outgoingCount: outgoingLinks.length,
       crawledAt: new Date(),
